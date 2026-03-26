@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bugstack.infrastructure.persistent.dao.IGroupBuyDiscountDao">
+
+    <resultMap id="dataMap" type="cn.bugstack.infrastructure.persistent.po.GroupBuyDiscount">
+        <id column="id" property="id"/>
+        <result column="discount_id" property="discountId"/>
+        <result column="discount_name" property="discountName"/>
+        <result column="discount_desc" property="discountDesc"/>
+        <result column="discount_type" property="discountType"/>
+        <result column="market_plan" property="marketPlan"/>
+        <result column="market_expr" property="marketExpr"/>
+        <result column="tag_id" property="tagId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="queryGroupBuyDiscountList" resultMap="dataMap">
+        select * from group_buy_discount
+    </select>
+
+    <select id="queryGroupBuyActivityDiscountByDiscountId" parameterType="java.lang.String" resultMap="dataMap">
+        select discount_id, discount_name, discount_desc, discount_type, market_plan, market_expr, tag_id
+        from group_buy_discount
+        where discount_id = #{discountId}
+    </select>
+
+    <select id="queryGroupBuyDiscountByDiscountId" parameterType="java.lang.String" resultMap="dataMap">
+        select *
+        from group_buy_discount
+        where discount_id = #{discountId}
+    </select>
+
+    <insert id="insert" parameterType="cn.bugstack.infrastructure.persistent.po.GroupBuyDiscount">
+        insert into group_buy_discount
+        (
+            discount_id,
+            discount_name,
+            discount_desc,
+            discount_type,
+            market_plan,
+            market_expr,
+            tag_id,
+            create_time,
+            update_time
+        )
+        values
+        (
+            #{discountId},
+            #{discountName},
+            #{discountDesc},
+            #{discountType},
+            #{marketPlan},
+            #{marketExpr},
+            #{tagId},
+            now(),
+            now()
+        )
+    </insert>
+
+    <update id="updateByDiscountId">
+        update group_buy_discount
+        <set>
+            <if test="discountName != null and discountName != ''">
+                discount_name = #{discountName},
+            </if>
+            <if test="discountDesc != null and discountDesc != ''">
+                discount_desc = #{discountDesc},
+            </if>
+            <if test="discountType != null">
+                discount_type = #{discountType},
+            </if>
+            <if test="marketPlan != null and marketPlan != ''">
+                market_plan = #{marketPlan},
+            </if>
+            <if test="marketExpr != null and marketExpr != ''">
+                market_expr = #{marketExpr},
+            </if>
+            <if test="tagId != null">
+                tag_id = #{tagId},
+            </if>
+            update_time = now()
+        </set>
+        where discount_id = #{discountId}
+    </update>
+
+    <delete id="deleteByDiscountId" parameterType="java.lang.String">
+        delete
+        from group_buy_discount
+        where discount_id = #{discountId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bugstack.infrastructure.persistent.dao.ISkuDao">
+
+    <resultMap id="dataMap" type="cn.bugstack.infrastructure.persistent.po.Sku">
+        <id column="id" property="id"/>
+        <result column="source" property="source"/>
+        <result column="channel" property="channel"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- SKU + 全局库存（activity_id = 0）的联合查询映射 -->
+    <resultMap id="skuWithInventoryMap" type="cn.bugstack.infrastructure.persistent.po.join.SkuWithInventoryPO">
+        <id column="id" property="id"/>
+        <result column="source" property="source"/>
+        <result column="channel" property="channel"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+
+        <result column="activity_id" property="activityId"/>
+        <result column="total_stock" property="totalStock"/>
+        <result column="reserved_stock" property="reservedStock"/>
+        <result column="sold_stock" property="soldStock"/>
+    </resultMap>
+
+    <select id="querySkuByGoodsId" parameterType="java.lang.String" resultMap="dataMap">
+        select source, channel, goods_id, goods_name, original_price
+        from sku
+        where goods_id = #{goodsId}
+    </select>
+
+    <!--
+        查询商品及其全局库存：
+        - 通过 goods_id 关联 activity_inventory
+        - 仅取 activity_id = 0 的全局库存记录
+        - 支持 goodsId 精确匹配和名称模糊查询
+    -->
+    <select id="querySkuWithInventory" resultMap="skuWithInventoryMap">
+        select
+            s.id,
+            s.source,
+            s.channel,
+            s.goods_id,
+            s.goods_name,
+            s.original_price,
+            s.create_time,
+            s.update_time,
+            ai.activity_id,
+            ai.total_stock,
+            ai.reserved_stock,
+            ai.sold_stock
+        from sku s
+        left join activity_inventory ai
+            on s.goods_id = ai.goods_id
+           and ai.activity_id = 0
+        <where>
+            1 = 1
+            <if test="source != null and source != ''">
+                and s.source = #{source}
+            </if>
+            <if test="channel != null and channel != ''">
+                and s.channel = #{channel}
+            </if>
+            <if test="goodsId != null and goodsId != ''">
+                and s.goods_id = #{goodsId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and s.goods_name like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        order by s.id desc
+    </select>
+
+    <insert id="insert" parameterType="cn.bugstack.infrastructure.persistent.po.Sku">
+        INSERT INTO sku
+        (
+            source,
+            channel,
+            goods_id,
+            goods_name,
+            original_price,
+            create_time,
+            update_time
+        )
+        VALUES
+            (
+                #{source},
+                #{channel},
+                #{goodsId},
+                #{goodsName},
+                #{originalPrice},
+                #{createTime},
+                #{updateTime}
+            )
+    </insert>
+
+    <delete id="deleteByGoodsId" parameterType="java.lang.String">
+        delete
+        from sku
+        where goods_id = #{goodsId}
+    </delete>
+
+    <update id="updateByGoodsId">
+        update sku
+        <set>
+            <if test="goodsName != null and goodsName != ''">
+                goods_name = #{goodsName},
+            </if>
+            <if test="originalPrice != null">
+                original_price = #{originalPrice},
+            </if>
+            update_time = now()
+        </set>
+        where goods_id = #{goodsId}
+    </update>
+</mapper>

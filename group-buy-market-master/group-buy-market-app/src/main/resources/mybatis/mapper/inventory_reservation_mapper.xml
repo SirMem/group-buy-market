@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bugstack.infrastructure.persistent.dao.IInventoryReservationDao">
+
+    <resultMap id="BaseResultMap" type="cn.bugstack.infrastructure.persistent.po.InventoryReservation">
+        <id     column="id"             property="id"            jdbcType="BIGINT"/>
+        <result column="order_id"       property="outTradeNo"       jdbcType="VARCHAR"/>
+        <result column="user_id"        property="userId"        jdbcType="VARCHAR"/>
+        <result column="team_id"        property="teamId"        jdbcType="VARCHAR"/>
+        <result column="activity_id"    property="activityId"    jdbcType="BIGINT"/>
+        <result column="goods_id"       property="goodsId"       jdbcType="VARCHAR"/>
+        <result column="status"         property="status"        jdbcType="TINYINT"/>
+        <result column="expire_at"      property="expireAt"      jdbcType="TIMESTAMP"/>
+        <result column="ext"            property="ext"           jdbcType="VARCHAR"/>
+        <result column="create_time"    property="createTime"    jdbcType="TIMESTAMP"/>
+        <result column="update_time"    property="updateTime"    jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 2. 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, reservation_id, order_id, user_id, team_id, activity_id, goods_id,
+        status, expire_at, ext, create_time, update_time
+    </sql>
+
+    <!-- 3. 基本CRUD操作 -->
+
+    <!-- CREATE: 新增记录 -->
+    <!-- useGeneratedKeys="true" 和 keyProperty="id" 用于返回自增主键 -->
+    <insert id="insert" parameterType="cn.bugstack.infrastructure.persistent.po.InventoryReservation"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO inventory_reservation
+        <!-- ✅ 修改点：把 outTradeNo 改为 out_trade_no -->
+        (out_trade_no, user_id, team_id, activity_id, goods_id,
+        status, expire_at, ext, create_time, update_time)
+        VALUES
+        <!-- 下面这行不用改，因为这里是读取 Java 对象的属性名，Java 里确实叫 outTradeNo -->
+        (#{outTradeNo,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+        #{teamId,jdbcType=VARCHAR}, #{activityId,jdbcType=BIGINT}, #{goodsId,jdbcType=VARCHAR},
+        #{status,jdbcType=TINYINT}, #{expireAt,jdbcType=TIMESTAMP}, #{ext,jdbcType=VARCHAR},
+        now(), now())
+    </insert>
+
+    <!-- READ: 根据主键ID查询 -->
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM inventory_reservation
+        WHERE id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <!-- READ: 根据预留单ID查询 -->
+    <select id="selectByReservationId" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM inventory_reservation
+        WHERE reservation_id = #{reservationId,jdbcType=VARCHAR}
+    </select>
+
+    <!-- READ: 根据订单ID查询 -->
+    <select id="selectByOrderId" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM inventory_reservation
+        WHERE order_id = #{orderId,jdbcType=VARCHAR}
+    </select>
+
+    <!-- READ: 查询所有记录 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM inventory_reservation
+    </select>
+
+    <!-- UPDATE: 根据主键更新记录 -->
+    <!-- 注意：这里会更新所有字段，如果需要动态更新(只更新非null字段)，可以使用<set>和<if>标签 -->
+    <update id="updateByPrimaryKey" parameterType="cn.bugstack.infrastructure.persistent.po.InventoryReservation">
+        UPDATE inventory_reservation
+        SET
+            reservation_id = #{reservationId,jdbcType=VARCHAR},
+            order_id       = #{orderId,jdbcType=VARCHAR},
+            user_id        = #{userId,jdbcType=VARCHAR},
+            team_id        = #{teamId,jdbcType=VARCHAR},
+            activity_id    = #{activityId,jdbcType=BIGINT},
+            goods_id       = #{goodsId,jdbcType=VARCHAR},
+            status         = #{status,jdbcType=TINYINT},
+            expire_at      = #{expireAt,jdbcType=TIMESTAMP},
+            ext            = #{ext,jdbcType=VARCHAR}
+        -- create_time 不应被更新
+        -- update_time 由数据库自动更新 (ON UPDATE CURRENT_TIMESTAMP)
+        WHERE
+            id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <!-- DELETE: 根据主键删除记录 -->
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        DELETE FROM inventory_reservation
+        WHERE id = #{id,jdbcType=BIGINT}
+    </delete>
+</mapper>

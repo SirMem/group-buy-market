@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bugstack.infrastructure.persistent.dao.IActivityInventoryDao">
+
+    <resultMap id="dataMap" type="cn.bugstack.infrastructure.persistent.po.ActivityInventory">
+        <id column="id" property="id"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="total_stock" property="totalStock"/>
+        <result column="reserved_stock" property="reservedStock"/>
+        <result column="sold_stock" property="soldStock"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.bugstack.infrastructure.persistent.po.ActivityInventory">
+        insert into activity_inventory (
+            activity_id,
+            goods_id,
+            total_stock,
+            reserved_stock,
+            sold_stock,
+            version,
+            create_time,
+            update_time
+        ) values (
+                     #{activityId},
+                     #{goodsId},
+                     #{totalStock},
+                     #{reservedStock},
+                     #{soldStock},
+                     #{version},
+                     now(),
+                     now()
+                 )
+    </insert>
+    <select id="queryTotalStockByGoodsId" parameterType="java.lang.String" resultType="java.lang.Long">
+        select total_stock from activity_inventory
+        where goods_id = #{goodsId}
+        limit 1
+    </select>
+
+    <update id="updateAddReserveStockByGoodsId" parameterType="java.lang.String">
+        update activity_inventory
+        SET reserved_stock = reserved_stock + 1
+        WHERE goods_id = #{GoodsId}
+        AND (total_stock - reserved_stock - sold_stock) > 0
+    </update>
+
+    <update id="updateSettleStockByGoodsId" parameterType="java.lang.String">
+        update activity_inventory
+        SET
+            reserved_stock = reserved_stock - 1, -- 从“预留”中减去
+            sold_stock = sold_stock + 1,        -- 增加到“已售”
+            update_time = NOW()
+        WHERE goods_id = #{GoodsId}
+          AND reserved_stock > 0  -- 前提条件：必须有预留库存可扣
+    </update>
+
+    <update id="updateReleaseReserveByGoodsId" parameterType="java.lang.String">
+        update activity_inventory
+        SET
+            reserved_stock = reserved_stock - 1, -- 释放预留
+            update_time = NOW()
+        WHERE goods_id = #{GoodsId}
+          AND reserved_stock > 0  -- 前提条件：必须有预留库存可释放
+    </update>
+
+    <update id="updateRefundStockByGoodsId" parameterType="java.lang.String">
+        update activity_inventory
+        SET
+            sold_stock = sold_stock - 1, -- 从“已售”中减去
+            update_time = NOW()
+        WHERE goods_id = #{GoodsId}
+          AND sold_stock > 0  -- 前提条件：必须有已售库存可退
+    </update>
+
+    <select id="queryByGoodsId" parameterType="java.lang.String" resultType="cn.bugstack.infrastructure.persistent.po.ActivityInventory">
+        SELECT *
+        FROM activity_inventory
+        WHERE goods_id = #{goodsId}
+    </select>
+
+    <delete id="deleteByGoodsId" parameterType="java.lang.String">
+        delete
+        from activity_inventory
+        where goods_id = #{goodsId}
+    </delete>
+
+    <update id="updateTotalStockByGoodsId">
+        update activity_inventory
+        set
+            total_stock = #{totalStock},
+            update_time = now()
+        where goods_id = #{goodsId}
+    </update>
+</mapper>
