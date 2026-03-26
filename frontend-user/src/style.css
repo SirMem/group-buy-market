@@ -1,0 +1,274 @@
+@import "tailwindcss";
+@import './design-system.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top, rgba(255, 90, 95, 0.08), transparent 35%),
+    linear-gradient(180deg, #fafcff 0%, var(--bg-color) 42%, #edf2f9 100%);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0 auto;
+  max-width: var(--app-max-width);
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--el-font-family);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at top, rgba(255, 90, 95, 0.09), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.08), transparent 24%),
+    linear-gradient(180deg, #fbfcff 0%, var(--bg-color) 40%, #edf2f9 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  margin: 0 auto;
+  width: min(100%, var(--app-max-width));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#app {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.sirmem-bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  margin: 0 auto;
+  width: min(100%, var(--app-max-width));
+  padding: 0 var(--space-4) calc(var(--space-3) + var(--safe-bottom));
+  pointer-events: none;
+}
+
+.sirmem-bottom-nav__rail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
+  box-shadow:
+    0 -10px 30px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.sirmem-bottom-nav__item {
+  position: relative;
+  display: flex;
+  min-height: 64px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.sirmem-bottom-nav__item:hover {
+  color: var(--text-sub);
+}
+
+.sirmem-bottom-nav__item:active {
+  transform: translateY(1px);
+}
+
+.sirmem-bottom-nav__item.is-active {
+  color: var(--primary-color-strong);
+  background: linear-gradient(180deg, rgba(255, 90, 95, 0.12), rgba(255, 90, 95, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 95, 0.12);
+}
+
+.sirmem-bottom-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.sirmem-bottom-nav__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sirmem-bottom-nav__item.is-active .sirmem-bottom-nav__icon {
+  background: linear-gradient(180deg, rgba(255, 90, 95, 0.18), rgba(255, 90, 95, 0.08));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 90, 95, 0.16),
+    0 10px 24px rgba(255, 90, 95, 0.16);
+  transform: translateY(-1px);
+}
+
+.sirmem-bottom-nav__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(255, 90, 95, 0.3);
+  outline-offset: 2px;
+}
+
+.el-button {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  min-height: 40px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: none;
+}
+
+.el-button:not(.is-text):not(.is-link) {
+  border-radius: var(--radius-pill);
+}
+
+.el-button--default {
+  --el-button-bg-color: var(--button-secondary-bg);
+  --el-button-text-color: var(--button-secondary-text);
+  --el-button-hover-bg-color: var(--button-secondary-bg-hover);
+  --el-button-hover-text-color: var(--text-strong);
+  --el-button-active-bg-color: #f8fafc;
+  box-shadow: var(--button-secondary-shadow);
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--button-primary-bg);
+  --el-button-text-color: var(--button-primary-text);
+  --el-button-hover-bg-color: var(--button-primary-bg-hover);
+  --el-button-active-bg-color: var(--button-primary-bg-active);
+  box-shadow: 0 12px 28px rgba(255, 90, 95, 0.24);
+}
+
+.el-button.is-plain {
+  --el-button-bg-color: var(--button-plain-bg);
+  --el-button-text-color: var(--button-plain-text);
+  --el-button-border-color: var(--button-plain-border);
+  --el-button-hover-bg-color: var(--primary-color-soft);
+  --el-button-hover-text-color: var(--primary-color-strong);
+  --el-button-hover-border-color: rgba(255, 90, 95, 0.24);
+  box-shadow: none;
+}
+
+.el-button.is-disabled,
+.el-button.is-disabled:hover {
+  box-shadow: none;
+}
+
+.el-tag {
+  --el-tag-border-radius: var(--radius-pill);
+  font-weight: 600;
+  border-color: transparent;
+}
+
+.el-tag--info {
+  --el-tag-bg-color: var(--tag-neutral-bg);
+  --el-tag-border-color: var(--tag-neutral-border);
+  --el-tag-text-color: var(--tag-neutral-text);
+}
+
+.el-tag--danger {
+  --el-tag-bg-color: var(--tag-soft-bg);
+  --el-tag-border-color: rgba(255, 90, 95, 0.16);
+  --el-tag-text-color: var(--tag-soft-text);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.14) inset, 0 10px 28px rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px rgba(255, 90, 95, 0.34) inset, 0 0 0 4px rgba(255, 90, 95, 0.12);
+}
+
+.el-skeleton__item {
+  border-radius: var(--radius-sm);
+  background: var(--skeleton-surface);
+}
+
+.el-progress-bar__outer {
+  background: rgba(226, 232, 240, 0.88);
+}
+
+.el-progress-bar__inner {
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--primary-color), #ff8b78);
+}
+
+.el-dialog,
+.el-message-box {
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-floating);
+}
+
+.el-dialog__header,
+.el-dialog__body,
+.el-message-box__content {
+  color: var(--text-main);
+}
+
+.el-overlay {
+  backdrop-filter: blur(8px);
+}

@@ -1,0 +1,58 @@
+export const sirmemTokens = {
+  color: {
+    brand: '#ff5a5f',
+    brandStrong: '#f0444a',
+    brandSoft: '#fff1f1',
+    brandSofter: '#fff6f6',
+    accent: '#ffb36b',
+    accentSecondary: '#ff8b78',
+    success: '#1f9d67',
+    warning: '#d97706',
+    danger: '#d92d20',
+    info: '#2563eb',
+    textMain: '#18212f',
+    textStrong: '#0f172a',
+    textSub: '#64748b',
+    textSoft: '#94a3b8',
+    textInverse: '#ffffff',
+    bgBase: '#f5f7fb',
+    bgElevated: '#eef2f8',
+    bgMuted: '#f8fafc',
+    surfaceCard: '#ffffff',
+  },
+  radius: {
+    xs: '12px',
+    sm: '16px',
+    md: '20px',
+    lg: '24px',
+    xl: '28px',
+    pill: '999px',
+  },
+  shadow: {
+    card: '0 14px 38px rgba(15, 23, 42, 0.06)',
+    cardHover: '0 18px 46px rgba(15, 23, 42, 0.1)',
+    soft: '0 8px 24px rgba(15, 23, 42, 0.05)',
+    floating: '0 16px 44px rgba(15, 23, 42, 0.12)',
+  },
+  space: {
+    1: '4px',
+    2: '8px',
+    3: '12px',
+    4: '16px',
+    5: '20px',
+    6: '24px',
+    7: '28px',
+    8: '32px',
+  },
+  layout: {
+    maxWidth: '480px',
+    bottomNavHeight: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+  },
+  media: {
+    aspectRatio: '1 / 1',
+    gradient: 'linear-gradient(135deg, rgba(255, 90, 95, 0.18), rgba(255, 179, 107, 0.22) 55%, rgba(37, 99, 235, 0.16))',
+    fallbackBg: 'linear-gradient(135deg, #fff6f6 0%, #fffdf8 100%)',
+  },
+} as const
+
+export type SirmemTokens = typeof sirmemTokens

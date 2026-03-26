@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TeamVisit - 组队探店</title>
+    <style>
+        :root {
+            --primary-color: #FF4D4F; /* 品牌红 */
+            --secondary-color: #FF7875;
+            --bg-color: #F7F8FA;
+            --card-bg: #FFFFFF;
+            --text-main: #1F1F1F;
+            --text-sub: #8C8C8C;
+            --border-color: #F0F0F0;
+            --success-color: #52C41A;
+            --warning-color: #FAAD14;
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: calc(60px + var(--safe-bottom));
+        }
+
+        /* 通用组件 */
+        .page { display: none; min-height: 100vh; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #FF7875 0%, #FF4D4F 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
+            active: scale(0.98);
+            transition: transform 0.1s;
+        }
+        .btn:disabled {
+            background: #d9d9d9;
+            box-shadow: none;
+            color: #8c8c8c;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+        }
+
+        .tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+        .tag-red { background: #FFF1F0; color: #F5222D; border: 1px solid #FFA39E; }
+        .tag-gold { background: #FFFBE6; color: #FA8C16; border: 1px solid #FFE58F; }
+
+        /* 顶部导航 */
+        .navbar {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .nav-title { font-size: 18px; font-weight: 600; }
+        .nav-back { font-size: 20px; color: var(--text-main); cursor: pointer; }
+
+        /* 首页 */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            overflow-x: auto;
+            scrollbar-width: none;
+            position: sticky;
+            top: 50px;
+            z-index: 99;
+        }
+        .filter-item {
+            padding: 6px 14px;
+            background: #F5F5F5;
+            border-radius: 16px;
+            font-size: 13px;
+            color: var(--text-sub);
+            white-space: nowrap;
+        }
+        .filter-item.active {
+            background: #FFF1F0;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .task-list { padding: 12px; }
+        .task-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            position: relative;
+        }
+        .card-img-wrap {
+            height: 140px;
+            background: #eee;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+        .countdown-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .card-body { padding: 12px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+        .card-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-bottom: 10px; }
+        
+        .progress-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .progress-bg { flex: 1; height: 6px; background: #F5F5F5; border-radius: 3px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #FF7875, #FF4D4F); width: 0; transition: width 0.5s; }
+        .progress-text { font-size: 12px; color: var(--text-sub); }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f5f5f5; padding-top: 10px; margin-top: 5px; }
+        .reward-box { color: var(--primary-color); font-weight: 600; font-size: 15px; }
+        .distance { font-size: 12px; color: var(--text-sub); display: flex; align-items: center; }
+
+        /* 详情页 */
+        .detail-banner { height: 220px; background-size: cover; background-position: center; position: relative; }
+        .detail-container { padding: 16px; margin-top: -20px; border-radius: 20px 20px 0 0; background: var(--bg-color); position: relative; z-index: 10; }
+        
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .section-header { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--primary-color); padding-left: 8px; line-height: 1; }
+        
+        .team-grid { display: flex; gap: 12px; margin-top: 12px; }
+        .avatar-box { text-align: center; width: 48px; position: relative; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #eee; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-size: cover; margin: 0 auto; }
+        .avatar.empty { border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 18px; background: #fafafa; }
+        .avatar-badge { position: absolute; bottom: 15px; right: 0px; background: var(--primary-color); color: white; font-size: 8px; padding: 1px 3px; border-radius: 4px; border: 1px solid #fff; }
+        .avatar-name { font-size: 10px; color: var(--text-sub); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .requirement-list li { font-size: 13px; color: #555; margin-bottom: 6px; position: relative; padding-left: 10px; list-style: none; }
+        .requirement-list li::before { content: "•"; color: var(--primary-color); position: absolute; left: 0; }
+
+        .bottom-action {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            padding: 10px 16px calc(10px + var(--safe-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        /* 我的页面 */
+        .user-header {
+            background: linear-gradient(135deg, #2b2b2b 0%, #444 100%);
+            color: #fff;
+            padding: 30px 20px 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-stats {
+            background: var(--card-bg);
+            margin: -30px 16px 16px;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .stat-num { font-size: 18px; font-weight: bold; color: var(--text-main); }
+        .stat-label { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+
+        .tab-switch { display: flex; background: #fff; padding: 0 16px; border-bottom: 1px solid #eee; position: sticky; top: 0; }
+        .tab-btn { flex: 1; text-align: center; padding: 14px 0; font-size: 14px; color: var(--text-sub); position: relative; cursor: pointer; }
+        .tab-btn.active { color: var(--primary-color); font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background: var(--primary-color); border-radius: 1px; }
+
+        /* 执行页/核销页 */
+        .code-box {
+            background: #333;
+            color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .code-num { font-size: 28px; font-family: monospace; font-weight: bold; letter-spacing: 4px; margin: 10px 0; }
+        .code-tip { font-size: 12px; color: #999; }
+        .step-timeline { padding-left: 10px; border-left: 1px solid #eee; margin-left: 8px; }
+        .step-item { position: relative; padding-left: 20px; padding-bottom: 20px; }
+        .step-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 9px; height: 9px; border-radius: 50%; background: #ddd; border: 2px solid #fff; }
+        .step-item.active::before { background: var(--primary-color); }
+        .step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .step-desc { font-size: 12px; color: var(--text-sub); }
+
+        /* 底部 TabBar */
+        .tabbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            padding-bottom: var(--safe-bottom);
+            z-index: 900;
+        }
+        .tabbar-item {
+            flex: 1;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #999;
+        }
+        .tabbar-item.active { color: var(--primary-color); }
+        .tabbar-icon { font-size: 22px; margin-bottom: 2px; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 12px 24px; border-radius: 8px; font-size: 14px;
+            z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .toast.show { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. 首页：任务大厅 -->
+    <div id="homePage" class="page active">
+        <div class="navbar">
+            <span class="nav-title">TeamVisit 探店 - @xiaofuge</span>
+            <span style="font-size: 14px; color: #666;">📍 北京 <small>朝阳区</small></span>
+        </div>
+        
+        <div class="filter-bar">
+            <div class="filter-item active">全部</div>
+            <div class="filter-item">美食</div>
+            <div class="filter-item">休闲娱乐</div>
+            <div class="filter-item">仅看急招</div>
+            <div class="filter-item">高额奖励</div>
+        </div>
+
+        <div class="task-list" id="taskList">
+            <!-- JS 渲染任务列表 -->
+        </div>
+    </div>
+
+    <!-- 2. 任务详情页 -->
+    <div id="detailPage" class="page">
+        <div class="navbar" style="position: absolute; top: 0; width: 100%; background: transparent; box-shadow: none;">
+            <span class="nav-back" onclick="router.back()" style="color: white; background: rgba(0,0,0,0.3); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">❮</span>
+        </div>
+        
+        <div class="detail-banner" id="d-banner">
+            <div style="position: absolute; bottom: 30px; left: 16px; color: white;">
+                <div class="tag tag-red" style="display: inline-block; background: var(--primary-color); color: white; border: none;">招募中</div>
+                <span style="font-size: 12px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;">⏰ 剩余 02:14:59</span>
+            </div>
+        </div>
+
+        <div class="detail-container">
+            <div class="section-card">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0 0 10px;" id="d-title"></h1>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: var(--primary-color); font-size: 18px; font-weight: bold;" id="d-reward"></div>
+                    <div style="font-size: 12px; color: #999;">仅剩 <span id="d-left" style="color: var(--primary-color)"></span> 个名额</div>
+                </div>
+                <div style="margin-top: 12px; font-size: 13px; color: #666; display: flex; align-items: center;">
+                    <span>📍 北京市朝阳区工体北路8号院</span>
+                    <span style="margin-left: auto; color: #1890ff;">🗺️ 导航</span>
+                </div>
+                <div style="font-size: 12px; color: #999; margin-top: 4px;">🕒 营业时间: 10:00 - 22:00</div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <span>拼团进度</span>
+                    <span style="font-size: 12px; color: #999; font-weight: normal;">满员即刻开团</span>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-bg"><div class="progress-bar" id="d-progress-bar"></div></div>
+                    <span class="progress-text" id="d-progress-text"></span>
+                </div>
+                <div class="team-grid" id="d-team-grid">
+                    <!-- 队友头像 -->
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">任务要求</div>
+                <ul class="requirement-list">
+                    <li>大众点评等级 <span class="tag tag-gold">Lv3+</span></li>
+                    <li>需拍摄 3张环境 + 6张菜品 (必拍: 招牌毛肚)</li>
+                    <li>文案需包含 "超值"、"聚餐好去处" 等关键词</li>
+                    <li>探店后 24小时内 提交作业</li>
+                </ul>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <span>达人评价 (3)</span>
+                    <span style="font-size: 12px; color: #999; font-weight: normal;">查看全部 ></span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <div style="font-size: 13px; color: #333; background: #f9f9f9; padding: 10px; border-radius: 8px; flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                            <div style="width: 20px; height: 20px; background: #ccc; border-radius: 50%;"></div>
+                            <span style="font-weight: bold; font-size: 12px;">阿白吃遍北京</span>
+                        </div>
+                        <div style="line-height: 1.4;">老板人很好，套餐量很大，三个人根本吃不完！</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="height: 60px;"></div>
+        </div>
+
+        <div class="bottom-action">
+            <div style="text-align: center; font-size: 10px; color: #666; margin-right: 10px;">
+                <div style="font-size: 18px;">💬</div>
+                咨询
+            </div>
+            <button class="btn" id="d-action-btn" onclick="app.joinTeam()">立即拼团抢名额</button>
+        </div>
+    </div>
+
+    <!-- 3. 任务执行/核销页 -->
+    <div id="executionPage" class="page">
+        <div class="navbar">
+            <span class="nav-back" onclick="router.back()">❮</span>
+            <span class="nav-title">任务执行</span>
+            <span style="width: 20px;"></span>
+        </div>
+        <div style="padding: 16px;">
+            <div class="section-card" style="border-top: 3px solid var(--primary-color);">
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;" id="e-title"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span class="tag tag-red" id="e-status">待探店</span>
+                    <span style="font-size: 12px; color: #999;">截止: 2026.03.06 23:59</span>
+                </div>
+                
+                <div class="code-box">
+                    <div class="code-tip">到店向店员出示此码核销</div>
+                    <div class="code-num">8920 1145</div>
+                    <div style="font-size: 12px; color: #aaa;">(模拟二维码区域)</div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">执行流程</div>
+                <div class="step-timeline">
+                    <div class="step-item active">
+                        <div class="step-title">拼团成功</div>
+                        <div class="step-desc">已锁定名额，任务开启</div>
+                    </div>
+                    <div class="step-item active">
+                        <div class="step-title">到店核销</div>
+                        <div class="step-desc">出示上方核销码，体验套餐</div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-title">提交作业</div>
+                        <div class="step-desc">拍摄照片，发布评价，上传截图</div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-title">审核结算</div>
+                        <div class="step-desc">商家审核通过后，奖励自动到账</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="e-submit-btn" onclick="router.go('submit')">去提交作业</button>
+        </div>
+    </div>
+
+    <!-- 4. 提交作业页 -->
+    <div id="submitPage" class="page">
+        <div class="navbar">
+            <span class="nav-back" onclick="router.back()">❮</span>
+            <span class="nav-title">提交作业</span>
+            <span style="width: 20px;"></span>
+        </div>
+        <div style="padding: 16px;">
+            <div class="section-card">
+                <div class="section-header">上传探店照片 (至少3张)</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="width: 80px; height: 80px; background: #f5f5f5; border: 1px dashed #ccc; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999;" onclick="app.mockUpload(this)">
+                        <span style="font-size: 24px;">+</span>
+                        <span style="font-size: 10px;">环境/菜品</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">评价截图 & 链接</div>
+                <div style="width: 80px; height: 80px; background: #f5f5f5; border: 1px dashed #ccc; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; margin-bottom: 12px;" onclick="app.mockUpload(this)">
+                    <span style="font-size: 24px;">+</span>
+                    <span style="font-size: 10px;">平台截图</span>
+                </div>
+                <input type="text" placeholder="粘贴评价链接 (可选)" style="width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 6px; background: #fafafa;">
+            </div>
+
+            <button class="btn" onclick="app.submitWork()">确认提交</button>
+        </div>
+    </div>
+
+    <!-- 5. 我的页面 -->
+    <div id="myPage" class="page">
+        <div class="user-header">
+            <div class="avatar" style="width: 60px; height: 60px; background-image: url('https://i.pravatar.cc/150?u=my'); border: 2px solid white;"></div>
+            <div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">探店小能手</div>
+                <div style="font-size: 12px; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; display: inline-block;">信用分: 极好 (780)</div>
+            </div>
+        </div>
+        
+        <div class="user-stats">
+            <div>
+                <div class="stat-num">¥150</div>
+                <div class="stat-label">钱包余额</div>
+            </div>
+            <div>
+                <div class="stat-num">12</div>
+                <div class="stat-label">已完成</div>
+            </div>
+            <div>
+                <div class="stat-num">98%</div>
+                <div class="stat-label">通过率</div>
+            </div>
+        </div>
+
+        <div class="tab-switch">
+            <div class="tab-btn active" onclick="app.switchMyTab('all')">全部</div>
+            <div class="tab-btn" onclick="app.switchMyTab('pending')">待探店</div>
+            <div class="tab-btn" onclick="app.switchMyTab('audit')">审核中</div>
+        </div>
+
+        <div id="myTaskList" style="padding: 16px;">
+            <!-- 我的任务列表 -->
+        </div>
+    </div>
+
+    <!-- 底部 TabBar -->
+    <div class="tabbar" id="tabbar">
+        <div class="tabbar-item active" onclick="router.switchTab('home')">
+            <span class="tabbar-icon">🏠</span>
+            <span>大厅</span>
+        </div>
+        <div class="tabbar-item" onclick="router.switchTab('my')">
+            <span class="tabbar-icon">👤</span>
+            <span>我的</span>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- 模拟数据 ---
+        const MOCK_DATA = {
+            tasks: [
+                {
+                    id: 1,
+                    title: "【三里屯】老北京铜锅涮肉 - 双人霸王餐",
+                    image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    tags: ["美食", "聚餐"],
+                    required: 3,
+                    current: 2,
+                    reward: "霸王餐+¥50",
+                    distance: "300m",
+                    status: "recruiting", // recruiting, full
+                    deadline: "2小时后截止"
+                },
+                {
+                    id: 2,
+                    title: "【国贸】云端下午茶 - 需拍照好看",
+                    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    tags: ["甜点", "拍照"],
+                    required: 5,
+                    current: 1,
+                    reward: "¥200 车马费",
+                    distance: "1.2km",
+                    status: "recruiting",
+                    deadline: "明天截止"
+                },
+                {
+                    id: 3,
+                    title: "【望京】深夜日式居酒屋 - 氛围感拉满",
+                    image: "https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    tags: ["日料", "晚市"],
+                    required: 2,
+                    current: 0,
+                    reward: "¥100 现金",
+                    distance: "5.5km",
+                    status: "recruiting",
+                    deadline: "3天后截止"
+                }
+            ],
+            myTasks: [] // { taskId, status: 'pending' | 'audit' | 'finished' }
+        };
+
+        // --- 路由与导航 ---
+        const router = {
+            history: [],
+            current: 'home',
+            
+            go(pageId, params = {}) {
+                this.history.push(this.current);
+                this.showPage(pageId, params);
+            },
+            
+            back() {
+                if (this.history.length > 0) {
+                    const prev = this.history.pop();
+                    this.showPage(prev, {}, true);
+                } else {
+                    this.switchTab('home');
+                }
+            },
+
+            switchTab(tab) {
+                this.history = [];
+                const pageId = tab === 'home' ? 'homePage' : 'myPage';
+                
+                // Update TabBar UI
+                document.querySelectorAll('.tabbar-item').forEach((el, idx) => {
+                    el.classList.toggle('active', (tab === 'home' && idx === 0) || (tab === 'my' && idx === 1));
+                });
+                
+                this.showPage(pageId);
+                
+                if (tab === 'home') {
+                    app.renderTaskList();
+                } else {
+                    app.renderMyTasks();
+                }
+            },
+
+            showPage(pageId, params = {}, isBack = false) {
+                document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+                document.getElementById(pageId === 'home' ? 'homePage' : (pageId === 'my' ? 'myPage' : pageId)).classList.add('active');
+                this.current = pageId;
+
+                // Tabbar visibility
+                const showTabbar = ['homePage', 'myPage'].includes(pageId);
+                document.getElementById('tabbar').style.display = showTabbar ? 'flex' : 'none';
+
+                // Hook
+                if (pageId === 'detailPage' && params.id) {
+                    app.renderDetail(params.id);
+                }
+                if (pageId === 'executionPage' && params.id) {
+                    app.renderExecution(params.id);
+                }
+            }
+        };
+
+        // --- 应用逻辑 ---
+        const app = {
+            currentTaskId: null,
+
+            init() {
+                this.renderTaskList();
+            },
+
+            renderTaskList() {
+                const container = document.getElementById('taskList');
+                container.innerHTML = MOCK_DATA.tasks.map(task => {
+                    const percent = Math.min(100, (task.current / task.required) * 100);
+                    return `
+                    <div class="task-card" onclick="router.go('detailPage', {id: ${task.id}})">
+                        <div class="card-img-wrap" style="background-image: url('${task.image}')">
+                            <div class="countdown-badge">⏰ ${task.deadline}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">${task.title}</div>
+                            <div class="card-meta">
+                                <div>
+                                    ${task.tags.map(t => `<span class="tag tag-gold">${t}</span>`).join('')}
+                                </div>
+                                <div class="distance">📍 ${task.distance}</div>
+                            </div>
+                            <div class="progress-wrap">
+                                <div class="progress-bg"><div class="progress-bar" style="width: ${percent}%"></div></div>
+                                <span class="progress-text">${task.current}/${task.required}人</span>
+                            </div>
+                            <div class="card-footer">
+                                <div class="reward-box">💰 ${task.reward}</div>
+                                <button class="btn" style="width: auto; padding: 6px 16px; font-size: 12px; height: auto;">抢名额</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            },
+
+            renderDetail(id) {
+                this.currentTaskId = id;
+                const task = MOCK_DATA.tasks.find(t => t.id === id);
+                if (!task) return;
+
+                document.getElementById('d-banner').style.backgroundImage = `url('${task.image}')`;
+                document.getElementById('d-title').innerText = task.title;
+                document.getElementById('d-reward').innerText = `💰 ${task.reward}`;
+                document.getElementById('d-left').innerText = task.required - task.current;
+                
+                const percent = (task.current / task.required) * 100;
+                document.getElementById('d-progress-bar').style.width = `${percent}%`;
+                document.getElementById('d-progress-text').innerText = `已拼 ${task.current} / 需 ${task.required} 人`;
+
+                // Render Avatars
+                const grid = document.getElementById('d-team-grid');
+                let html = '';
+                for (let i = 0; i < task.required; i++) {
+                    if (i < task.current) {
+                        html += `
+                        <div class="avatar-box">
+                            <div class="avatar" style="background-image: url('https://i.pravatar.cc/150?u=${task.id * 10 + i}')"></div>
+                            <div class="avatar-name">队友${i+1}</div>
+                        </div>`;
+                    } else {
+                        html += `
+                        <div class="avatar-box">
+                            <div class="avatar empty">+</div>
+                            <div class="avatar-name">待加入</div>
+                        </div>`;
+                    }
+                }
+                grid.innerHTML = html;
+
+                // Button State
+                const btn = document.getElementById('d-action-btn');
+                const myTask = MOCK_DATA.myTasks.find(t => t.taskId === id);
+                
+                if (myTask) {
+                    btn.innerText = '已参与，查看执行进度';
+                    btn.onclick = () => router.go('executionPage', {id: id});
+                } else if (task.current >= task.required) {
+                    btn.innerText = '名额已满';
+                    btn.disabled = true;
+                } else {
+                    btn.innerText = '立即拼团抢名额';
+                    btn.disabled = false;
+                    btn.onclick = () => this.joinTeam();
+                }
+            },
+
+            joinTeam() {
+                const task = MOCK_DATA.tasks.find(t => t.id === this.currentTaskId);
+                if (task.current >= task.required) {
+                    this.toast('手慢了，名额刚被抢光！');
+                    return;
+                }
+
+                // Simulate API
+                this.toast('抢单中...', 500);
+                setTimeout(() => {
+                    task.current += 1;
+                    MOCK_DATA.myTasks.push({
+                        taskId: task.id,
+                        status: 'pending' // pending -> audit -> finished
+                    });
+                    this.toast('🎉 抢单成功！');
+                    this.renderDetail(task.id); // Refresh
+                }, 800);
+            },
+
+            renderExecution(id) {
+                this.currentTaskId = id;
+                const task = MOCK_DATA.tasks.find(t => t.id === id);
+                const myTask = MOCK_DATA.myTasks.find(t => t.taskId === id);
+
+                document.getElementById('e-title').innerText = task.title;
+                
+                const statusMap = {
+                    'pending': { text: '待探店', color: 'tag-red' },
+                    'audit': { text: '审核中', color: 'tag-gold' },
+                    'finished': { text: '已完成', color: 'tag-green' } // tag-green css needed but fallback ok
+                };
+                
+                const st = statusMap[myTask.status];
+                const statusEl = document.getElementById('e-status');
+                statusEl.className = `tag ${st.color}`;
+                statusEl.innerText = st.text;
+
+                const btn = document.getElementById('e-submit-btn');
+                if (myTask.status === 'pending') {
+                    btn.innerText = '去提交作业';
+                    btn.disabled = false;
+                    btn.onclick = () => router.go('submitPage');
+                } else if (myTask.status === 'audit') {
+                    btn.innerText = '作业审核中';
+                    btn.disabled = true;
+                } else {
+                    btn.innerText = '奖励已发放';
+                    btn.disabled = true;
+                }
+            },
+
+            mockUpload(el) {
+                el.style.border = '2px solid var(--success-color)';
+                el.style.color = 'var(--success-color)';
+                el.innerHTML = '<span style="font-size:24px;">✓</span><span style="font-size:10px;">已上传</span>';
+            },
+
+            submitWork() {
+                this.toast('提交中...');
+                setTimeout(() => {
+                    const myTask = MOCK_DATA.myTasks.find(t => t.taskId === this.currentTaskId);
+                    if (myTask) myTask.status = 'audit';
+                    
+                    this.toast('提交成功！等待审核');
+                    router.go('executionPage', {id: this.currentTaskId});
+                    
+                    // Auto approve mock
+                    setTimeout(() => {
+                        if (myTask.status === 'audit') {
+                            myTask.status = 'finished';
+                            this.toast('商家已通过审核，奖励到账！');
+                            if (document.getElementById('executionPage').classList.contains('active')) {
+                                this.renderExecution(this.currentTaskId);
+                            }
+                        }
+                    }, 3000);
+
+                }, 1000);
+            },
+
+            renderMyTasks(filter = 'all') {
+                const container = document.getElementById('myTaskList');
+                const list = MOCK_DATA.myTasks.filter(t => filter === 'all' || t.status === filter);
+                
+                if (list.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">暂无任务</div>';
+                    return;
+                }
+
+                container.innerHTML = list.map(mt => {
+                    const task = MOCK_DATA.tasks.find(t => t.id === mt.taskId);
+                    let statusText = mt.status === 'pending' ? '待探店' : (mt.status === 'audit' ? '审核中' : '已完成');
+                    let color = mt.status === 'pending' ? '#FF4D4F' : '#FAAD14';
+                    
+                    return `
+                    <div class="task-card" onclick="router.go('executionPage', {id: ${task.id}})">
+                        <div style="display: flex; padding: 12px;">
+                            <div style="width: 80px; height: 80px; background-image: url('${task.image}'); background-size: cover; border-radius: 8px; margin-right: 12px;"></div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${task.title}</div>
+                                <div style="font-size: 12px; color: #999; margin-bottom: 8px;">${task.reward}</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="color: ${color}; font-size: 12px; font-weight: 500;">${statusText}</span>
+                                    <button class="btn-outline">查看</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            },
+
+            switchMyTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                const filterMap = {
+                    '待探店': 'pending',
+                    '审核中': 'audit',
+                    '全部': 'all'
+                };
+                const filter = filterMap[event.target.innerText] || 'all';
+                this.renderMyTasks(filter);
+            },
+
+            toast(msg, duration = 2000) {
+                const el = document.getElementById('toast');
+                el.innerText = msg;
+                el.classList.add('show');
+                setTimeout(() => el.classList.remove('show'), duration);
+            }
+        };
+
+        // Start
+        app.init();
+
+    </script>
+</body>
+</html>
