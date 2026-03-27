@@ -3,14 +3,27 @@ import { defineStore } from 'pinia'
 const AUTH_KEY = 'gbm_auth_info'
 
 export interface AuthUser {
-  id?: string
+  id?: string | number
+  username?: string
   name?: string
   role?: string
+  userStatus?: number
 }
 
 interface AuthState {
   token: string
   user: AuthUser | null
+}
+
+const normalizeUser = (user: any): AuthUser | null => {
+  if (!user) return null
+  return {
+    id: user.id,
+    username: user.username || user.name || '',
+    name: user.name || user.username || '',
+    role: user.role,
+    userStatus: user.userStatus,
+  }
 }
 
 const loadAuth = (): AuthState => {
@@ -19,8 +32,8 @@ const loadAuth = (): AuthState => {
     if (!raw) return { token: '', user: null }
     const parsed = JSON.parse(raw)
     return {
-      token: parsed.token || '',
-      user: parsed.user || null,
+      token: parsed.token || parsed.jwtToken || '',
+      user: normalizeUser(parsed.user),
     }
   } catch {
     return { token: '', user: null }
@@ -40,7 +53,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     setAuth(payload: AuthState) {
       this.token = payload.token || ''
-      this.user = payload.user || null
+      this.user = normalizeUser(payload.user)
       this.persist()
     },
     clear() {
@@ -56,3 +69,4 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 })
+
